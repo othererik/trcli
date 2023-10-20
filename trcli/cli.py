@@ -14,7 +14,8 @@ from trcli.constants import (
     FAULT_MAPPING,
     MISSING_COMMAND_SLOGAN,
     TOOL_USAGE,
-    TOOL_VERSION, PARSE_JUNIT_FAULT_MAPPING,
+    TOOL_VERSION,
+    PARSE_JUNIT_FAULT_MAPPING,
 )
 from trcli.data_classes.data_parsers import FieldsParser
 from trcli.settings import DEFAULT_API_CALL_TIMEOUT, DEFAULT_BATCH_SIZE
@@ -74,7 +75,7 @@ class Environment:
             exit(1)
         self._case_fields = fields_dict
 
-    @property 
+    @property
     def result_fields(self):
         return self._result_fields
 
@@ -145,9 +146,15 @@ class Environment:
             if "missing_" + param in FAULT_MAPPING and not value:
                 self.elog(FAULT_MAPPING["missing_" + param])
                 exit(1)
-            if self.cmd == "parse_junit" and "missing_" + param in PARSE_JUNIT_FAULT_MAPPING and not value:
-                self.elog(PARSE_JUNIT_FAULT_MAPPING["missing_" + param])
-                exit(1)
+            if (
+                self.cmd == "parse_junit"
+                and "missing_" + param in PARSE_JUNIT_FAULT_MAPPING
+                and not value
+            ):
+                # If we haven empty title, check for run_id - we don't need title in this case
+                if param != "title" or (param == "title" and not self.run_id):
+                    self.elog(PARSE_JUNIT_FAULT_MAPPING["missing_" + param])
+                    exit(1)
         # special case for password and key (both needs to be missing for the error message to show up)
         if not self.password and not self.key:
             self.elog(FAULT_MAPPING["missing_password_and_key"])
